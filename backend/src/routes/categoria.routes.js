@@ -11,8 +11,6 @@ const { authMiddleware } = require('../middlewares/auth.middleware');
 
 const router = Router();
 
-router.use(authMiddleware);
-
 /**
  * @swagger
  * /tiendas/{tiendaId}/categorias:
@@ -32,7 +30,7 @@ router.use(authMiddleware);
  *       200:
  *         description: Categorias obtenidas correctamente.
  */
-router.get('/tiendas/:tiendaId/categorias', listCategories);
+router.get('/tiendas/:tiendaId/categorias', authMiddleware, listCategories);
 
 /**
  * @swagger
@@ -55,7 +53,7 @@ router.get('/tiendas/:tiendaId/categorias', listCategories);
  *       404:
  *         description: Categoria no encontrada.
  */
-router.get('/categorias/:id', getCategoryById);
+router.get('/categorias/:id', authMiddleware, getCategoryById);
 
 /**
  * @swagger
@@ -89,7 +87,7 @@ router.get('/categorias/:id', getCategoryById);
  *       201:
  *         description: Categoria creada correctamente.
  */
-router.post('/tiendas/:tiendaId/categorias', createCategory);
+router.post('/tiendas/:tiendaId/categorias', authMiddleware, createCategory);
 
 /**
  * @swagger
@@ -121,7 +119,7 @@ router.post('/tiendas/:tiendaId/categorias', createCategory);
  *       200:
  *         description: Categoria actualizada correctamente.
  */
-router.put('/categorias/:id', updateCategory);
+router.put('/categorias/:id', authMiddleware, updateCategory);
 
 /**
  * @swagger
@@ -142,6 +140,6 @@ router.put('/categorias/:id', updateCategory);
  *       200:
  *         description: Categoria eliminada logicamente.
  */
-router.delete('/categorias/:id', deleteCategory);
+router.delete('/categorias/:id', authMiddleware, deleteCategory);
 
 module.exports = router;

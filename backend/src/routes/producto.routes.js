@@ -11,8 +11,6 @@ const { authMiddleware } = require('../middlewares/auth.middleware');
 
 const router = Router();
 
-router.use(authMiddleware);
-
 /**
  * @swagger
  * /tiendas/{tiendaId}/productos:
@@ -32,7 +30,7 @@ router.use(authMiddleware);
  *       200:
  *         description: Productos obtenidos correctamente.
  */
-router.get('/tiendas/:tiendaId/productos', listProducts);
+router.get('/tiendas/:tiendaId/productos', authMiddleware, listProducts);
 
 /**
  * @swagger
@@ -55,7 +53,7 @@ router.get('/tiendas/:tiendaId/productos', listProducts);
  *       404:
  *         description: Producto no encontrado.
  */
-router.get('/productos/:id', getProductById);
+router.get('/productos/:id', authMiddleware, getProductById);
 
 /**
  * @swagger
@@ -103,7 +101,7 @@ router.get('/productos/:id', getProductById);
  *       201:
  *         description: Producto creado correctamente.
  */
-router.post('/tiendas/:tiendaId/productos', createProduct);
+router.post('/tiendas/:tiendaId/productos', authMiddleware, createProduct);
 
 /**
  * @swagger
@@ -147,7 +145,7 @@ router.post('/tiendas/:tiendaId/productos', createProduct);
  *       200:
  *         description: Producto actualizado correctamente.
  */
-router.put('/productos/:id', updateProduct);
+router.put('/productos/:id', authMiddleware, updateProduct);
 
 /**
  * @swagger
@@ -168,6 +166,6 @@ router.put('/productos/:id', updateProduct);
  *       200:
  *         description: Producto eliminado logicamente.
  */
-router.delete('/productos/:id', deleteProduct);
+router.delete('/productos/:id', authMiddleware, deleteProduct);
 
 module.exports = router;

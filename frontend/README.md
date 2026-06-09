@@ -1,18 +1,28 @@
-# Frontend
+# Frontend CatalogosYa
 
-Frontend de `CatalogosYa` construido con React, Vite y TailwindCSS.
+Frontend administrativo y publico construido con React, Vite y TailwindCSS.
 
-## Incluye
+## Inicio rapido
 
-- React con Vite
-- TailwindCSS
-- React Router
-- Axios con manejo de JWT
-- SweetAlert2 e iziToast
-- React Hook Form
-- Lucide React
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
 
-## Rutas base
+## Variables
+
+Revisa [../README.md](/Users/rolandomedina/Desktop/XP/Catalogo/CatalogosYa/README.md:1) para la configuracion completa de entorno y el flujo principal.
+
+## Scripts
+
+```bash
+npm run dev
+npm run build
+npm run preview
+```
+
+## Rutas
 
 - `/login`
 - `/admin`

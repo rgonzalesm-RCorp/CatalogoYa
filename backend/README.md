@@ -1,19 +1,27 @@
-# Backend
+# Backend CatalogosYa
 
-Backend base de `CatalogosYa` construido con Node.js, Express, Sequelize y SQL Server.
+Backend en Node.js + Express con SQL Server, Sequelize, JWT, Swagger, Google Identity y Cloudinary.
 
-## Incluye
+## Inicio rapido
 
-- Estructura `src/` separada por capas
-- Conexion base a SQL Server con Sequelize y Tedious
-- Endpoint `GET /api/health`
-- Middleware global de errores
-- Logs con Morgan
-- Swagger disponible en `/api/docs`
-- Runtime objetivo: Node.js 18 o superior
+```bash
+npm install
+cp .env.example .env
+npm start
+```
 
-## Alcance actual
+## Variables
 
-- Solo infraestructura base
-- Sin modulos de negocio
-- Independiente del frontend
+Revisa [../README.md](/Users/rolandomedina/Desktop/XP/Catalogo/CatalogosYa/README.md:1) para la lista completa de variables y el flujo de instalacion.
+
+## Scripts
+
+```bash
+npm start
+npm run dev
+```
+
+## Documentacion API
+
+- Health: `GET /api/health`
+- Swagger: `GET /api/docs`
