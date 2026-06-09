@@ -1,0 +1,57 @@
+@import 'izitoast/dist/css/iziToast.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color: theme('colors.brand.ink');
+    background:
+      radial-gradient(circle at top, rgba(216, 177, 106, 0.18), transparent 30%),
+      linear-gradient(180deg, #fff8ef 0%, #f6f1e9 100%);
+  }
+
+  * {
+    @apply border-brand-mist;
+  }
+
+  body {
+    @apply min-h-screen bg-brand-cream font-sans text-brand-ink antialiased;
+    background-size: auto, auto;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-[28px] border border-white/60 bg-white/80 p-6 shadow-soft backdrop-blur;
+  }
+
+  .admin-panel {
+    @apply rounded-[28px] border border-brand-mist/70 bg-white/85 p-6 shadow-soft backdrop-blur;
+  }
+
+  .hero-surface {
+    @apply rounded-[32px] border border-white/25 bg-brand-ink bg-hero-grid bg-[size:18px_18px] text-brand-sand shadow-soft;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-2 rounded-full bg-brand-moss/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-brand-moss;
+  }
+
+  .field {
+    @apply w-full rounded-2xl border border-brand-mist bg-white px-4 py-3 text-sm text-brand-ink outline-none transition focus:border-brand-coral focus:ring-4 focus:ring-brand-coral/10;
+  }
+
+  .button-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-coral px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-forest;
+  }
+
+  .button-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-mist bg-white px-5 py-3 text-sm font-semibold text-brand-ink transition hover:border-brand-coral hover:text-brand-coral;
+  }
+}
