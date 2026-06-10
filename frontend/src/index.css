@@ -54,4 +54,13 @@
   .button-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-mist bg-white px-5 py-3 text-sm font-semibold text-brand-ink transition hover:border-brand-coral hover:text-brand-coral;
   }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

@@ -4,6 +4,7 @@ const app = require('./src/app');
 const { env } = require('./src/config/env');
 const {
   closeDatabaseConnection,
+  migrateDatabase,
   testDatabaseConnection,
 } = require('./src/config/database');
 
@@ -15,11 +16,8 @@ server.on('error', (error) => {
 });
 
 const startServer = async () => {
-  try {
-    await testDatabaseConnection();
-  } catch (error) {
-    console.warn('Database connection unavailable during startup:', error.message);
-  }
+  await testDatabaseConnection();
+  await migrateDatabase();
 
   server.listen(env.PORT, env.HOST, () => {
     console.log(`${env.APP_NAME} listening on http://${env.HOST}:${env.PORT}`);

@@ -7,6 +7,7 @@ import CatalogoPublicoPage from '../pages/CatalogoPublicoPage';
 import CategoriasPage from '../pages/CategoriasPage';
 import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
+import ProductoDetallePublicoPage from '../pages/ProductoDetallePublicoPage';
 import ProductosPage from '../pages/ProductosPage';
 import TiendaDetallePage from '../pages/TiendaDetallePage';
 import TiendasPage from '../pages/TiendasPage';
@@ -31,6 +32,7 @@ function AppRouter() {
 
         <Route path="/:slug" element={<LayoutPublico />}>
           <Route index element={<CatalogoPublicoPage />} />
+          <Route path="producto/:productoId" element={<ProductoDetallePublicoPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

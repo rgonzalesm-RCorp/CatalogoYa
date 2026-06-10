@@ -77,12 +77,5 @@ module.exports = (sequelize) => sequelize.define(
     timestamps: true,
     createdAt: 'FechaCreacion',
     updatedAt: 'FechaModificacion',
-    validate: {
-      rangoDePreciosValido() {
-        if (Number(this.PrecioMayor) < Number(this.PrecioMenor)) {
-          throw new Error('PrecioMayor no puede ser menor que PrecioMenor.');
-        }
-      },
-    },
   },
 );

@@ -1,12 +1,11 @@
-import { Copy, ExternalLink, PlusCircle, Power, Store } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Copy, ExternalLink, Plus, Search, Store, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 
 import { createTienda, deleteTienda, getTiendas, updateTienda } from '../api/tiendas.api';
 import EmptyState from '../components/EmptyState';
 import LoadingScreen from '../components/LoadingScreen';
-import StoreForm from '../components/StoreForm';
+import StoreModal from '../components/StoreModal';
 import {
   getErrorMessage,
   showErrorToast,
@@ -19,12 +18,18 @@ import {
   copyText,
 } from '../utils/tiendas';
 
+const normalizeText = (value = '') => String(value).toLowerCase().trim();
+
 function TiendasPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deletingStoreId, setDeletingStoreId] = useState(null);
   const [formKey, setFormKey] = useState(0);
   const [stores, setStores] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('create');
+  const [selectedStore, setSelectedStore] = useState(null);
 
   const loadStores = async () => {
     try {
@@ -40,6 +45,34 @@ function TiendasPage() {
   useEffect(() => {
     loadStores();
   }, []);
+
+  const visibleStores = useMemo(() => (
+    stores.filter((store) => (
+      !normalizeText(searchQuery)
+      || normalizeText(`${store.Nombre} ${store.Slug} ${store.Descripcion || ''}`).includes(normalizeText(searchQuery))
+    ))
+  ), [stores, searchQuery]);
+
+  const openCreateModal = () => {
+    setSelectedStore(null);
+    setModalMode('create');
+    setModalOpen(true);
+  };
+
+  const openEditModal = (store) => {
+    setSelectedStore(store);
+    setModalMode('edit');
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (submitting) {
+      return;
+    }
+
+    setModalOpen(false);
+    setSelectedStore(null);
+  };
 
   const handleCreateStore = async (values) => {
     const payload = buildStorePayload(values);
@@ -65,13 +98,15 @@ function TiendasPage() {
           nextStore = updateResponse.data;
         } catch (error) {
           showInfoToast(
-            `La tienda se creó, pero el slug solicitado no se pudo aplicar. Quedó como ${buildPublicStoreUrl(nextStore.Slug)}.`,
+            `La tienda se creo, pero el slug solicitado no se pudo aplicar. Quedo como ${buildPublicStoreUrl(nextStore.Slug)}.`,
           );
         }
       }
 
       setStores((currentStores) => [nextStore, ...currentStores]);
       setFormKey((currentKey) => currentKey + 1);
+      setModalOpen(false);
+      setSelectedStore(null);
       showSuccessToast(`La tienda ${nextStore.Nombre} fue creada correctamente.`);
     } catch (error) {
       showErrorToast(getErrorMessage(error, 'No se pudo crear la tienda.'));
@@ -83,24 +118,24 @@ function TiendasPage() {
   const handleCopyUrl = async (slug) => {
     try {
       await copyText(buildPublicStoreUrl(slug));
-      showSuccessToast('La URL pública fue copiada.');
+      showSuccessToast('La URL publica fue copiada.');
     } catch (error) {
-      showErrorToast(getErrorMessage(error, 'No se pudo copiar la URL pública.'));
+      showErrorToast(getErrorMessage(error, 'No se pudo copiar la URL publica.'));
     }
   };
 
   const handleDeactivateStore = async (store) => {
     const result = await Swal.fire({
-      title: '¿Desactivar tienda?',
-      text: `La tienda ${store.Nombre} dejará de estar disponible públicamente.`,
+      title: 'Desactivar tienda',
+      text: `La tienda ${store.Nombre} dejara de estar disponible publicamente.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#ef7d57',
-      cancelButtonColor: '#244734',
-      confirmButtonText: 'Sí, desactivar',
+      confirmButtonColor: '#6d4df6',
+      cancelButtonColor: '#d1d5db',
+      confirmButtonText: 'Si, desactivar',
       cancelButtonText: 'Cancelar',
-      background: '#fff8ef',
-      color: '#18261f',
+      background: '#ffffff',
+      color: '#171c33',
     });
 
     if (!result.isConfirmed) {
@@ -122,153 +157,236 @@ function TiendasPage() {
     }
   };
 
+  const handleEditStore = async (values) => {
+    if (!selectedStore) {
+      return;
+    }
+
+    const payload = buildStorePayload(values);
+
+    if (!payload.Estado) {
+      const result = await Swal.fire({
+        title: 'Desactivar tienda',
+        text: `La tienda ${selectedStore.Nombre} dejara de estar visible publicamente.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#6d4df6',
+        cancelButtonColor: '#d1d5db',
+        confirmButtonText: 'Si, desactivar',
+        cancelButtonText: 'Cancelar',
+        background: '#ffffff',
+        color: '#171c33',
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      setSubmitting(true);
+
+      try {
+        await deleteTienda(selectedStore.TiendaID);
+        setStores((currentStores) => currentStores.filter(
+          (currentStore) => currentStore.TiendaID !== selectedStore.TiendaID,
+        ));
+        setModalOpen(false);
+        setSelectedStore(null);
+        showSuccessToast(`La tienda ${selectedStore.Nombre} fue desactivada.`);
+      } catch (error) {
+        showErrorToast(getErrorMessage(error, 'No se pudo desactivar la tienda.'));
+      } finally {
+        setSubmitting(false);
+      }
+
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await updateTienda(selectedStore.TiendaID, {
+        Nombre: payload.Nombre,
+        Slug: payload.Slug,
+        Logo: payload.Logo || null,
+        Portada: payload.Portada || null,
+        WhatsApp: payload.WhatsApp || null,
+        Descripcion: payload.Descripcion || null,
+        ColorPrincipal: payload.ColorPrincipal || null,
+      });
+
+      setStores((currentStores) => currentStores.map((store) => (
+        store.TiendaID === selectedStore.TiendaID ? response.data : store
+      )));
+      setModalOpen(false);
+      setSelectedStore(null);
+      showSuccessToast(`La tienda ${response.data.Nombre} fue actualizada.`);
+    } catch (error) {
+      showErrorToast(getErrorMessage(error, 'No se pudo actualizar la tienda.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return <LoadingScreen label="Cargando tiendas..." />;
   }
 
   return (
     <div className="space-y-6">
-      <header className="admin-panel">
-        <p className="badge">Módulo Tiendas</p>
-        <h1 className="mt-4 font-display text-3xl font-semibold text-brand-forest">Tus tiendas</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-brand-moss">
-          Administra las tiendas del usuario autenticado: crea nuevas, edita su identidad visual,
-          copia su URL pública y desactívalas con borrado lógico cuando ya no deban mostrarse.
-        </p>
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-3xl bg-brand-cream p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-brand-moss">Tiendas activas</p>
-            <p className="mt-2 font-display text-3xl font-semibold text-brand-forest">{stores.length}</p>
-          </div>
-          <div className="rounded-3xl bg-brand-cream p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-brand-moss">Dominio público</p>
-            <p className="mt-2 font-semibold text-brand-forest">catalogosYa.com</p>
-          </div>
-          <div className="rounded-3xl bg-brand-cream p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-brand-moss">Acceso</p>
-            <p className="mt-2 text-sm font-semibold text-brand-forest">
-              Solo ves y administras tus propias tiendas.
-            </p>
-          </div>
-        </div>
-      </header>
-
-      <div className="grid gap-6 xl:grid-cols-[460px,1fr]">
-        <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-          <section className="admin-panel" id="crear-tienda">
-            <div className="flex items-center gap-3">
-              <PlusCircle className="text-brand-coral" size={20} />
+      <div className="space-y-6">
+          <section className="rounded-[8px] border border-[#ece8f4] bg-white p-5 shadow-[0_18px_40px_rgba(66,41,133,0.08)]">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <p className="font-display text-2xl font-semibold text-brand-forest">Crear tienda</p>
-                <p className="mt-1 text-sm text-brand-moss">
-                  Completa la información pública y deja lista la URL `catalogosYa.com/{'{slug}'}`.
+                <h2 className="text-3xl font-semibold text-[#171d37]">Lista de tiendas</h2>
+                <p className="mt-2 text-sm text-[#7b8198]">
+                  Administra tu presencia publica y el acceso a cada catalogo.
                 </p>
+              </div>
+
+              <div className="rounded-2xl border border-[#ebe7f3] bg-[#fcfbff] px-4 py-3 text-sm text-[#6b7289]">
+                Dominio publico: <span className="font-semibold text-[#171d37]">catalogosYa.com</span>
               </div>
             </div>
 
-            <div className="mt-6">
-              <StoreForm
-                key={formKey}
-                mode="create"
-                onSubmit={handleCreateStore}
-                submitting={submitting}
-              />
+            <div className="mt-5 grid gap-3 xl:grid-cols-[minmax(0,1fr),auto]">
+              <label className="relative block">
+                <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#9398af]" size={18} />
+                <input
+                  className="w-full rounded-2xl border border-[#ebe7f3] bg-[#fcfbff] py-3 pl-12 pr-4 text-sm text-[#1c2340] outline-none transition focus:border-[#6d4df6] focus:ring-4 focus:ring-[#6d4df6]/10"
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Buscar tiendas..."
+                  value={searchQuery}
+                />
+              </label>
+
+              <button
+                className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,_#6d4df6_0%,_#8a63ff_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(109,77,246,0.24)]"
+                onClick={openCreateModal}
+                type="button"
+              >
+                <Plus size={16} />
+                Agregar tienda
+              </button>
             </div>
           </section>
-        </aside>
 
-        <section className="space-y-4">
           {stores.length === 0 ? (
             <EmptyState
-              title="Todavía no hay tiendas"
-              description="Crea la primera tienda desde el formulario lateral y aparecerá listada aquí."
+              title="Todavia no hay tiendas"
+              description="Crea la primera tienda desde el panel lateral y aparecera aqui con el nuevo estilo del admin."
             />
           ) : null}
 
-          {stores.map((store) => (
-            <article className="admin-panel" key={store.TiendaID}>
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex items-start gap-4">
-                  {store.Logo ? (
-                    <img
-                      alt={`Logo de ${store.Nombre}`}
-                      className="h-16 w-16 rounded-3xl object-cover"
-                      src={store.Logo}
-                    />
-                  ) : (
-                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-forest text-brand-sand">
-                      <Store size={22} />
-                    </span>
-                  )}
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className="font-display text-2xl font-semibold text-brand-forest">{store.Nombre}</p>
-                      <span className="rounded-full bg-brand-forest px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-sand">
-                        {store.Estado ? 'Activa' : 'Inactiva'}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-brand-moss">{buildPublicStoreUrl(store.Slug)}</p>
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-brand-moss">
-                      {store.Descripcion || 'Sin descripción pública registrada todavía.'}
-                    </p>
-                  </div>
-                </div>
+          {stores.length > 0 && visibleStores.length === 0 ? (
+            <EmptyState
+              title="No encontramos tiendas con esa busqueda"
+              description="Prueba con otro nombre o slug para volver a ver resultados."
+            />
+          ) : null}
 
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    className="button-secondary"
-                    onClick={() => handleCopyUrl(store.Slug)}
-                    type="button"
-                  >
-                    <Copy size={16} />
-                    Copiar URL
-                  </button>
-                  <Link className="button-secondary" to={`/admin/tiendas/${store.TiendaID}`}>
-                    <ExternalLink size={16} />
-                    Editar
-                  </Link>
-                  <button
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-coral/30 bg-brand-coral/10 px-5 py-3 text-sm font-semibold text-brand-coral transition hover:bg-brand-coral hover:text-white"
-                    disabled={deletingStoreId === store.TiendaID}
-                    onClick={() => handleDeactivateStore(store)}
-                    type="button"
-                  >
-                    <Power size={16} />
-                    {deletingStoreId === store.TiendaID ? 'Desactivando...' : 'Desactivar'}
-                  </button>
-                </div>
+          {visibleStores.length > 0 ? (
+            <div className="overflow-hidden rounded-[8px] border border-[#ece8f4] bg-white shadow-[0_18px_40px_rgba(66,41,133,0.08)]">
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="border-b border-[#efebf6] bg-[#fcfbff] text-left text-xs font-bold uppercase tracking-[0.18em] text-[#8a90a8]">
+                      <th className="px-5 py-4">Tienda</th>
+                      <th className="px-5 py-4">Slug</th>
+                      <th className="px-5 py-4">WhatsApp</th>
+                      <th className="px-5 py-4">Color</th>
+                      <th className="px-5 py-4">Token</th>
+                      <th className="px-5 py-4 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleStores.map((store) => (
+                      <tr className="border-b border-[#f1edf7]" key={store.TiendaID}>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            {store.Logo ? (
+                              <img
+                                alt={`Logo de ${store.Nombre}`}
+                                className="h-12 w-12 rounded-2xl object-cover"
+                                src={store.Logo}
+                              />
+                            ) : (
+                              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f1edff] text-[#7b57f6]">
+                                <Store size={18} />
+                              </span>
+                            )}
+                            <div className="min-w-0">
+                              <p className="truncate text-base font-semibold text-[#171d37]">{store.Nombre}</p>
+                              <p className="mt-1 text-sm text-[#7b8198]">
+                                {store.Descripcion || 'Sin descripcion publica registrada todavia.'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-sm font-medium text-[#404862]">
+                          {store.Slug}
+                        </td>
+                        <td className="px-5 py-4 text-sm font-medium text-[#404862]">
+                          {store.WhatsApp || 'No definido'}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className="h-7 w-7 rounded-full border border-[#ddd7ea]"
+                              style={{ backgroundColor: store.ColorPrincipal || '#d9e4d7' }}
+                            />
+                            <span className="text-sm font-semibold text-[#171d37]">{store.ColorPrincipal || 'No definido'}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-sm font-medium text-[#404862]">
+                          <span className="block max-w-[180px] truncate">{store.TokenPublico}</span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              className="inline-flex items-center gap-2 rounded-2xl border border-[#e8e4f1] px-4 py-2.5 text-sm font-semibold text-[#2b3354]"
+                              onClick={() => handleCopyUrl(store.Slug)}
+                              type="button"
+                            >
+                              <Copy size={16} />
+                              Copiar URL
+                            </button>
+                            <button
+                              className="inline-flex items-center gap-2 rounded-2xl border border-[#e8e4f1] px-4 py-2.5 text-sm font-semibold text-[#2b3354]"
+                              onClick={() => openEditModal(store)}
+                              type="button"
+                            >
+                              <ExternalLink size={16} />
+                              Editar
+                            </button>
+                            <button
+                              className="inline-flex items-center gap-2 rounded-2xl border border-[#ffe0ea] px-4 py-2.5 text-sm font-semibold text-[#ef4b88]"
+                              disabled={deletingStoreId === store.TiendaID}
+                              onClick={() => handleDeactivateStore(store)}
+                              type="button"
+                            >
+                              <Trash2 size={16} />
+                              {deletingStoreId === store.TiendaID ? 'Desactivando...' : 'Desactivar'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-3xl bg-brand-cream p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-brand-moss">Slug</p>
-                  <p className="mt-2 text-sm font-semibold text-brand-forest">{store.Slug}</p>
-                </div>
-                <div className="rounded-3xl bg-brand-cream p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-brand-moss">WhatsApp</p>
-                  <p className="mt-2 text-sm font-semibold text-brand-forest">{store.WhatsApp || 'No definido'}</p>
-                </div>
-                <div className="rounded-3xl bg-brand-cream p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-brand-moss">Color principal</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <span
-                      className="h-6 w-6 rounded-full border border-brand-mist"
-                      style={{ backgroundColor: store.ColorPrincipal || '#d9e4d7' }}
-                    />
-                    <span className="text-sm font-semibold text-brand-forest">
-                      {store.ColorPrincipal || 'No definido'}
-                    </span>
-                  </div>
-                </div>
-                <div className="rounded-3xl bg-brand-cream p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-brand-moss">Token público</p>
-                  <p className="mt-2 break-all text-sm font-semibold text-brand-forest">{store.TokenPublico}</p>
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
+            </div>
+          ) : null}
       </div>
+
+      <StoreModal
+        isOpen={modalOpen}
+        key={modalMode === 'create' ? formKey : selectedStore?.TiendaID || 'edit-store'}
+        mode={modalMode}
+        onClose={closeModal}
+        onSubmit={modalMode === 'create' ? handleCreateStore : handleEditStore}
+        store={selectedStore}
+        submitting={submitting}
+      />
     </div>
   );
 }

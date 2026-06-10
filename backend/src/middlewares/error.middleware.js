@@ -12,6 +12,11 @@ const errorHandler = (error, req, res, next) => {
     message = error.errors?.[0]?.message || 'Validation error.';
   }
 
+  if (error.type === 'entity.too.large') {
+    statusCode = 413;
+    message = 'La solicitud es demasiado grande. Reduce el tamano del logo o banner, o aumenta API_BODY_LIMIT.';
+  }
+
   if (statusCode >= 500) {
     console.error(error);
   }

@@ -13,11 +13,14 @@ const app = express();
 const corsOrigin = env.CORS_ORIGIN === '*'
   ? true
   : env.CORS_ORIGIN.split(',').map((origin) => origin.trim());
+const requestBodyOptions = {
+  limit: env.API_BODY_LIMIT,
+};
 
 app.disable('x-powered-by');
 app.use(cors({ origin: corsOrigin }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json(requestBodyOptions));
+app.use(express.urlencoded({ ...requestBodyOptions, extended: true }));
 app.use(requestLogger);
 
 app.use(

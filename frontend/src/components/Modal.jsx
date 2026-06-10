@@ -14,6 +14,11 @@ function Modal({
       return undefined;
     }
 
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         onClose();
@@ -23,6 +28,8 @@ function Modal({
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [open, onClose]);
@@ -38,7 +45,7 @@ function Modal({
       role="presentation"
     >
       <div
-        className={`max-h-[90vh] w-full overflow-y-auto rounded-[32px] border border-white/60 bg-white shadow-soft ${maxWidthClass}`}
+        className={`flex max-h-[90vh] w-full flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white shadow-soft ${maxWidthClass}`}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -64,7 +71,7 @@ function Modal({
           </button>
         </div>
 
-        <div className="px-6 py-6">
+        <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {children}
         </div>
       </div>

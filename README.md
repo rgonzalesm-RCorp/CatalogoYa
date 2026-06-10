@@ -82,6 +82,9 @@ DB_PASSWORD=YourStrong!Passw0rd
 DB_ENCRYPT=false
 DB_TRUST_SERVER_CERTIFICATE=true
 DB_LOGGING=false
+DB_AUTO_MIGRATE=true
+DB_MIGRATE_ALTER=false
+DB_MIGRATE_FORCE=false
 
 JWT_SECRET=change_this_secret
 JWT_EXPIRES_IN=1d
@@ -167,6 +170,21 @@ npm run preview
 8. El usuario administra categorias y productos solo dentro de sus tiendas.
 9. Las imagenes se envian a Cloudinary y en SQL Server solo se guarda la URL.
 10. El catalogo publico queda disponible por `GET /api/public/catalogo/:slug`.
+
+## Migracion automatica al iniciar la API
+
+Al arrancar el backend, la API intenta conectarse a SQL Server y ejecutar `sequelize.sync()` antes de abrir el puerto.
+
+Si la conexion o la migracion fallan, la API no inicia. Eso evita dejar el backend arriba sin todas las tablas necesarias.
+
+- `DB_AUTO_MIGRATE=true`: habilita la sincronizacion automatica del esquema.
+- `DB_MIGRATE_ALTER=true`: ajusta tablas existentes para alinearlas con los modelos.
+- `DB_MIGRATE_FORCE=true`: recrea tablas. Usar solo si quieres rehacer el esquema y perder datos.
+
+Recomendacion:
+
+- En desarrollo, puedes usar `DB_MIGRATE_ALTER=true` si estas iterando el modelo.
+- En entornos con datos reales, manten `DB_MIGRATE_FORCE=false` y usa `DB_MIGRATE_ALTER` con cuidado.
 
 ## Reglas funcionales ya implementadas
 

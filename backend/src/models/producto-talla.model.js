@@ -56,12 +56,5 @@ module.exports = (sequelize) => sequelize.define(
     tableName: 'ProductoTalla',
     freezeTableName: true,
     timestamps: false,
-    validate: {
-      rangoDePreciosValido() {
-        if (Number(this.PrecioMayor) < Number(this.PrecioMenor)) {
-          throw new Error('PrecioMayor no puede ser menor que PrecioMenor.');
-        }
-      },
-    },
   },
 );

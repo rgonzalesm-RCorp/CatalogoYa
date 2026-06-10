@@ -51,12 +51,6 @@ const parseNonNegativeNumber = (value, fieldName) => {
   return parsedValue;
 };
 
-const ensurePriceRange = (precioMenor, precioMayor, entityName) => {
-  if (precioMayor < precioMenor) {
-    throw new HttpError(400, `${entityName} PrecioMayor cannot be lower than PrecioMenor.`);
-  }
-};
-
 const ensureProductName = (nombre) => {
   if (!nombre || !String(nombre).trim()) {
     throw new HttpError(400, 'Nombre is required.');
@@ -198,8 +192,6 @@ const normalizeTallasPayload = (tallas) => {
     const precioMenor = parseNonNegativeNumber(talla.PrecioMenor, `Tallas[${index}].PrecioMenor`);
     const precioMayor = parseNonNegativeNumber(talla.PrecioMayor, `Tallas[${index}].PrecioMayor`);
 
-    ensurePriceRange(precioMenor, precioMayor, `Tallas[${index}]`);
-
     return {
       ProductoTallaID: talla.ProductoTallaID
         ? parsePositiveId(talla.ProductoTallaID, 'producto talla id')
@@ -228,8 +220,6 @@ const ensureProductPrices = (payload, currentProducto) => {
 
   const precioMenor = parseNonNegativeNumber(rawPrecioMenor, 'PrecioMenor');
   const precioMayor = parseNonNegativeNumber(rawPrecioMayor, 'PrecioMayor');
-
-  ensurePriceRange(precioMenor, precioMayor, 'Product');
 
   return {
     precioMenor,

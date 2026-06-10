@@ -1,3 +1,5 @@
+import { readFileAsDataUrl } from './files';
+
 export const getProductFormValues = (product) => {
   const rawImages = Array.isArray(product?.Imagenes) ? product.Imagenes : [];
   const normalizedImages = rawImages.map((image, index) => ({
@@ -76,12 +78,6 @@ const parseNonNegativeInteger = (value, label) => {
   return parsedValue;
 };
 
-const ensurePriceRange = (precioMenor, precioMayor, label) => {
-  if (precioMayor < precioMenor) {
-    throw new Error(`${label}: Precio mayor no puede ser menor que precio menor.`);
-  }
-};
-
 const normalizeImages = (images = []) => {
   const validImages = images
     .map((image) => ({
@@ -123,8 +119,6 @@ const normalizeSizes = (sizes = []) => {
     const precioMenor = parseNonNegativeNumber(size?.PrecioMenor, `Precio menor de ${talla}`);
     const precioMayor = parseNonNegativeNumber(size?.PrecioMayor, `Precio mayor de ${talla}`);
 
-    ensurePriceRange(precioMenor, precioMayor, `Talla ${talla}`);
-
     return {
       ProductoTallaID: size?.ProductoTallaID || undefined,
       Talla: talla,
@@ -159,27 +153,11 @@ export const buildProductPayload = (values) => {
   const precioMenor = parseNonNegativeNumber(values?.PrecioMenor, 'Precio menor');
   const precioMayor = parseNonNegativeNumber(values?.PrecioMayor, 'Precio mayor');
 
-  ensurePriceRange(precioMenor, precioMayor, 'Producto');
-
   payload.PrecioMenor = precioMenor;
   payload.PrecioMayor = precioMayor;
 
   return payload;
 };
-
-export const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    resolve(reader.result);
-  };
-
-  reader.onerror = () => {
-    reject(new Error(`No se pudo leer el archivo ${file.name}.`));
-  };
-
-  reader.readAsDataURL(file);
-});
 
 export const getPriceRangeFromSizes = (sizes = []) => {
   const normalizedPrices = sizes
